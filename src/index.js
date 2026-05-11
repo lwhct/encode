@@ -1,5 +1,4 @@
-const RAW_URL = "https://raw.githubusercontent.com/lwhct/encode/refs/heads/main/encode/encode.bin
-";
+const RAW_URL = "https://raw.githubusercontent.com/lwhct/encode/refs/heads/main/encode/encode.bin";
 
 export default {
     async fetch(request, env, ctx) {
