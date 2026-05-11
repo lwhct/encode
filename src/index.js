@@ -1,4 +1,4 @@
-const RAW_URL = "https://raw.githubusercontent.com/lwhct/encode/refs/heads/main/encode/encode.bin"
+const RAW_URL = "https://raw.githubusercontent.com/lwhct/encode/main/encode/encode.bin";
 
 export default {
     async fetch(request, env, ctx) {
@@ -22,8 +22,7 @@ export default {
             });
         }
 
-        let sub = await response.text();
-        sub = sub.trim();
+        const sub = (await response.text()).trim();
 
         return new Response(sub, {
             headers: {
