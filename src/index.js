@@ -1,33 +1,16 @@
-const RAW_URL = "https://raw.githubusercontent.com/lwhct/encode/main/encode/encode.bin";
+throw new Error("BUILD_CHECK_20260511");
+
+const RAW_URL = 'https://raw.githubusercontent.com/lwhct/encode/main/encode/encode.bin';
 
 export default {
     async fetch(request, env, ctx) {
-        const response = await fetch(RAW_URL, {
-            headers: {
-                "user-agent": "Cloudflare-Worker-Subscription"
-            },
-            cf: {
-                cacheTtl: 0,
-                cacheEverything: false
-            }
-        });
-
-        if (!response.ok) {
-            return new Response("Subscription fetch failed", {
-                status: 502,
-                headers: {
-                    "content-type": "text/plain; charset=utf-8",
-                    "cache-control": "no-store"
-                }
-            });
-        }
-
+        const response = await fetch(RAW_URL);
         const sub = (await response.text()).trim();
 
         return new Response(sub, {
             headers: {
-                "content-type": "text/plain; charset=utf-8",
-                "cache-control": "no-store"
+                'content-type': 'text/plain; charset=utf-8',
+                'cache-control': 'no-store'
             }
         });
     }
