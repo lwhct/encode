@@ -3,23 +3,19 @@ var REPO = "encode";
 var BRANCH = "main";
 var DIR = "encode";
 
-var V2RAYN_REPO = "2dust/v2rayN";
-var V2RAYNG_REPO = "2dust/v2rayNG";
-
-async function getLatestRelease(repo, assetFilter) {
-  var resp = await fetch("https://api.github.com/repos/" + repo + "/releases/latest", {
-    headers: { "user-agent": "Cloudflare-Worker" }
+async function getLatestTag(repo) {
+  var resp = await fetch("https://github.com/" + repo + "/releases/latest", {
+    headers: { "user-agent": "Cloudflare-Worker" },
+    redirect: "manual"
   });
-  if (!resp.ok) return null;
-  var data = await resp.json();
-  var asset = data.assets.find(assetFilter);
-  return asset ? asset.browser_download_url : null;
+  var loc = resp.headers.get("location");
+  if (loc) return loc.split("/").pop();
+  return null;
 }
 
 function isMobile(ua) {
   return /android|mobile|phone/i.test(ua || "");
 }
-
 
 export default {
   async fetch(request, env, ctx) {
@@ -42,19 +38,18 @@ export default {
       var mobile = isMobile(ua);
       var downloadUrl;
       if (mobile) {
-        downloadUrl = await getLatestRelease(V2RAYNG_REPO, function(a) {
-          if (want32) return /v2rayNG_[^_]+_armeabi-v7a\.apk$/i.test(a.name);
-          return /v2rayNG_[^_]+_arm64-v8a\.apk$/i.test(a.name);
-        });
+        var tag = await getLatestTag("2dust/v2rayNG");
+        if (!tag) return new Response("Failed to get latest version", { status: 502 });
+        var arch = want32 ? "armeabi-v7a" : "arm64-v8a";
+        downloadUrl = "https://github.com/2dust/v2rayNG/releases/download/" + tag + "/v2rayNG_" + tag + "_" + arch + ".apk";
       } else {
-        downloadUrl = await getLatestRelease(V2RAYN_REPO, function(a) {
-          if (want32) return /^v2rayN-windows-86-desktop\.zip$/i.test(a.name);
-          return /^v2rayN-windows-64-desktop\.zip$/i.test(a.name);
-        });
+        var tag = await getLatestTag("2dust/v2rayN");
+        if (!tag) return new Response("Failed to get latest version", { status: 502 });
+        var variant = want32 ? "v2rayN-windows-86-desktop.zip" : "v2rayN-windows-64-desktop.zip";
+        downloadUrl = "https://github.com/2dust/v2rayN/releases/download/" + tag + "/" + variant;
       }
-      if (!downloadUrl) return new Response("Release not found", { status: 404 });
       var dlResp = await fetch(downloadUrl, { headers: { "user-agent": "Cloudflare-Worker" }, redirect: "follow" });
-      if (!dlResp.ok) return new Response("Download failed", { status: 502 });
+      if (!dlResp.ok) return new Response("Download failed: " + dlResp.status, { status: 502 });
       var filename = downloadUrl.split("/").pop();
       var dlHeaders = new Headers(dlResp.headers);
       dlHeaders.set("content-disposition", 'attachment; filename="' + filename + '"');
