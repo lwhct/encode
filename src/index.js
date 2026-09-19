@@ -20,8 +20,25 @@ function isMobile(ua) {
 export default {
   async fetch(request, env, ctx) {
     var url = new URL(request.url);
-    var name = url.pathname.replace(/^\/+|\/+$/g, "");
+    var path = url.pathname.replace(/^\/+/, "").replace(/\/+$/, "");
     var ua = request.headers.get("user-agent") || "";
+
+    if (path.substring(0, 4) === "http") {
+      var dlUrl = path + url.search;
+      try { new URL(dlUrl); } catch (e) {
+        return new Response("Invalid URL", { status: 400 });
+      }
+      var dlResp = await fetch(dlUrl, { headers: { "user-agent": ua || "Cloudflare-Worker" }, redirect: "follow" });
+      if (!dlResp.ok) return new Response("Download failed: " + dlResp.status, { status: 502 });
+      var filename = dlUrl.split("/").pop().split("?")[0] || "download";
+      var dlHeaders = new Headers(dlResp.headers);
+      dlHeaders.set("content-disposition", 'attachment; filename="' + filename + '"');
+      dlHeaders.set("cache-control", "no-store");
+      dlHeaders.delete("content-security-policy");
+      return new Response(dlResp.body, { headers: dlHeaders });
+    }
+
+    var name = path;
 
     if (!name) {
       var rawUrl = ["https://raw.githubusercontent.com", USER, REPO, BRANCH, DIR, "encode.bin"].join("/");
